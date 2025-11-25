@@ -1,0 +1,7 @@
+[theme]
+base = "light"                 # Forces Light Mode (Fixes the dark background)
+primaryColor = "#007AFF"       # Apple System Blue
+backgroundColor = "#F5F5F7"    # Apple Light Gray Background
+secondaryBackgroundColor = "#FFFFFF" # Sidebar Color
+textColor = "#1D1D1F"          # Apple Dark Gray Text (Readable)
+font = "sans serif"

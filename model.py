@@ -25,9 +25,19 @@ class BlackScholes:
     @property
     def d1(self) -> float:
         if self._d1 is None:
-            self._d1 = (
-                np.log(self.S / self.K) + (self.r + 0.5 * self.sigma**2) * self.T
-            ) / (self.sigma * np.sqrt(self.T))
+            # Edge case: zero volatility
+            if self.sigma == 0:
+                # For zero volatility, return inf or -inf based on intrinsic value
+                if self.S > self.K:
+                    self._d1 = np.inf
+                elif self.S < self.K:
+                    self._d1 = -np.inf
+                else:
+                    self._d1 = 0.0
+            else:
+                self._d1 = (
+                    np.log(self.S / self.K) + (self.r + 0.5 * self.sigma**2) * self.T
+                ) / (self.sigma * np.sqrt(self.T))
         return self._d1
 
     @property
