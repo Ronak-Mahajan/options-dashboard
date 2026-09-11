@@ -2,7 +2,6 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime
 
 from model import BlackScholes
 import database as db
@@ -353,7 +352,13 @@ st.markdown("---")
 
 def generate_heatmap(option_type: str, chart_style: str, purchase_price: float | None = None, simulate_pnl: bool = False) -> go.Figure:
     spot_range = np.linspace(S * 0.7, S * 1.3, 25)
-    vol_range = np.linspace(max(0.05, sigma * 0.5), sigma * 1.5, 25)
+    # The grid spans 0.5 sigma .. 1.5 sigma with the lower edge floored at 5%.
+    # The upper edge is floored 5 vol points above the lower one; without it
+    # the axis ran backwards for sigma < 3.33% and spanned 5% down to 0% at
+    # sigma == 0.
+    vol_lo = max(0.05, sigma * 0.5)
+    vol_hi = max(sigma * 1.5, vol_lo + 0.05)
+    vol_range = np.linspace(vol_lo, vol_hi, 25)
 
     prices = np.zeros((len(vol_range), len(spot_range)))
     for i, vol in enumerate(vol_range):

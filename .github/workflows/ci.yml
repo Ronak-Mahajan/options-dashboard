@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt pytest 2>&1 | tee -a ci.log; exit ${PIPESTATUS[0]}
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v 2>&1 | tee -a ci.log; exit ${PIPESTATUS[0]}
+
+      # CI logs are not downloadable from the owner's machine without a token,
+      # so on a failed non-main push the tail of the captured log is committed
+      # back to the branch where it can be read with git.
+      - name: Commit failure log
+        if: failure() && github.event_name == 'push' && github.ref != 'refs/heads/main'
+        run: |
+          mkdir -p .ci
+          touch ci.log
+          tail -c 60000 ci.log > .ci/last-failure-test.log
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add .ci/last-failure-test.log
+          git commit -m "ci: failure log [skip ci]" || exit 0
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"

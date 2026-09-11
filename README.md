@@ -12,6 +12,7 @@ A Streamlit tool for pricing European options and visualizing the Greeks using t
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
+![CI](https://github.com/Ronak-Mahajan/options-dashboard/actions/workflows/ci.yml/badge.svg)
 
 ## Key Features
 
@@ -71,13 +72,36 @@ Navigate to `http://localhost:8501` in your browser.
 The **Calculate** button saves the current inputs and outputs to the history
 table; prices and Greeks themselves update live as you change any input.
 
+## Tests
+
+```bash
+pip install pytest
+python -m pytest tests/
+```
+
+- `tests/test_model.py` checks the closed form against itself: put-call parity,
+  a textbook reference price (Hull: S=42, K=40, r=10%, sigma=20%, T=0.5 gives
+  call 4.76 and put 0.81), the sigma=0 deterministic limit, finite Greeks at
+  sigma=0, and central finite differences for all five Greeks.
+- `tests/test_app.py` runs the Streamlit script headlessly through
+  `streamlit.testing.v1.AppTest` and checks the metric cards (default inputs
+  give call 10.4506 / put 5.5735; sigma=0 shows no nan, inf or negative
+  price) and that the heatmap volatility axis is ascending.
+
+The same suite runs on every push in `.github/workflows/ci.yml`.
+
 ## Project Structure
 
 ```
 options-dashboard/
-├── app.py           # Streamlit application
-├── model.py         # Black-Scholes pricing engine
-├── database.py      # SQLite persistence layer
+├── app.py                    # Streamlit application
+├── model.py                  # Black-Scholes pricing engine
+├── database.py               # SQLite persistence layer
+├── tests/
+│   ├── test_model.py         # closed-form checks
+│   └── test_app.py           # headless AppTest checks
+├── .github/workflows/ci.yml  # runs the tests on every push
+├── .streamlit/config.toml    # light theme
 ├── requirements.txt
 ├── LICENSE
 └── README.md
@@ -85,8 +109,9 @@ options-dashboard/
 
 ## Limitations
 
-- No market data, no implied-volatility inversion and no tests: every number
-  is a function of the five hand-typed inputs. For those features use
+- No market data and no implied-volatility inversion: every number is a
+  function of the five hand-typed inputs, and the tests check the closed form
+  against itself, not against quotes. For those features use
   [neural-options-lab](https://github.com/Ronak-Mahajan/neural-options-lab).
 - The P&L grid subtracts one purchase price from both the call and the put
   surface; it is a scenario colouring, not a position P&L.
